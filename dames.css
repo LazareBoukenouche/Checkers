@@ -1,0 +1,40 @@
+
+.col {
+  display : flex;
+  width:80vmin;
+}
+
+div {
+  box-sizing: border-box;
+  width:8vmin;
+  height:8vmin;
+  border:1px solid black;
+  background-color : black; 
+}
+
+.col:nth-child(2n) .row:nth-child(2n) {
+    background-color: beige;
+}
+
+.col:nth-child(2n+1) .row:nth-child(2n+1) {
+    background-color: beige;
+}
+
+.pionBlanc {
+    border-radius: 40vmin;
+    background: #bf8040;
+}
+
+.pionNoir {
+    border-radius: 40vmin;
+    background: darkred;  
+}
+
+.available:hover, .available2:hover {
+    border:2px solid white;
+}
+
+#35 {
+    border-radius: 40vmin;
+    background: #bf8040;
+}
