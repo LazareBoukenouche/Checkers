@@ -1,166 +1,435 @@
-var body = document.querySelector("body");
-var joueur1 = true;
-var selection = false;
-var allWhiteMen = document.querySelectorAll('.pionBlanc');
-var allBlackMen = document.querySelectorAll('.pionNoir');
-var allCases = document.querySelectorAll('.row');
-var allColumns = ["col10", "col9", "col8", "col7", "col6", "col5", "col4", "col3", "col2", "col1"];
-var allRow = ['rowa', 'rowb', 'rowc', 'rowd', 'rowe', 'rowf', 'rowg', 'rowh', 'rowi', 'rowj'];
+// Declare the constants of the game
+const boardGame = [
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]],
+    [[],[],[],[],[],[],[],[],[],[]]
+   ]
 
-function selectMen(elem) {
-    // Check if the function was raised once
-    if (selection === false) {
-        selection = true; 
-        // Get the column, the case and the number of the case
-        let colonne = elem.parentNode;
-        let casesList = [];
-        casesList.push(elem);
-        let menSelected = casesList[0];
-        let menSelectedNumber = casesList[0].classList[3];
-        var menSelectedRowLetter = casesList[0].classList[1];
-        var previousRow = colonne.previousElementSibling;
-        let availableCase1 = "."+ showAvailableMove(menSelectedRowLetter, previousRow)[0];
-        let availableCase2 ="."+ showAvailableMove(menSelectedRowLetter, previousRow)[1];
-        let availableColumn ="."+ showAvailableMove(menSelectedRowLetter, previousRow)[2].classList[1];
-        
-        glowSelectedMen(menSelected);
-        getNextCasesCoord(menSelectedRowLetter, previousRow);
-        colorAvailableMove(availableCase1,availableCase2,availableColumn);
-        selection = false;
-        moveMen(availableCase1,availableCase2,availableColumn);
-        selection = true;
-    }
-}
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 
-function addSelectFunctionToWhiteMen() {
-    allWhiteMen.forEach(function(elem){
-        elem.setAttribute("onclick","selectMen(this)");  
-    });
-}
+// =================================== Version POO ==============================
 
-function addSelectFunctionToBlackMen() {
-    allBlackMen.forEach(function(elem){
-        elem.setAttribute("onclick","selectMen(this)");  
-    });
-}
 
-function glowSelectedMen(elem) {
-    // Make the selected men glow white
-    elem.style.borderColor = "white";
-}
+// class Pawn {}
 
-function getNextCasesCoord(letterCase, previousCol) {
-    /* Check the letter of the current case and return the letters of the previous and next case on the next column */
-    for (let i = 0;i< allRow.length;++i) {
-        if (letterCase == allRow[i]) {
-            let nextRow = allRow[i+1];
-            let precedentRow = allRow[i-1];
-            let coordNextCase = [precedentRow,nextRow, previousCol];
-            return coordNextCase;
+// class WhitePawn extends Pawn {}
+
+// class BlackPawn extends Pawn {}
+
+class Board {
+    array;
+    x;
+    y;
+    height;
+    width;
+
+    constructor(array,x,y,height,width) {
+        this.array = array;
+        this.x = x;
+        this.y = y;
+        this.height = height;
+        this.width = width;
+        }
+    
+    // display the board on the HTML page
+    display() {
+        // we loop trough each cell and multiply their x coordinate by i and y by j
+        // then use the display method of each cell
+        for (let i = 0;i< this.array.length;i++) {
+            for (let j = 0;j<this.array[i].length;j++) {
+                this.array[i][j][0].y*=i;
+                this.array[i][j][0].x*=j
+                this.array[i][j][0].display(this.array[i][j][0].x,this.array[i][j][0].y);
+            }
         }
     }
-    
-}
 
-function showAvailableMove(letterCase,previousRow) {
-    return [getNextCasesCoord(letterCase, previousRow)[0],getNextCasesCoord(letterCase, previousRow)[1],getNextCasesCoord(letterCase, previousRow)[2]];
-}
-
-function colorAvailableMove(case1,case2,column) {
-    var col = document.querySelector(column);
-    var emptyCase1Check = col.querySelector("div"+case1).classList.contains('pionBlanc');
-    var emptyCase2Check = col.querySelector("div"+case2).classList.contains('pionBlanc');
-    var emptyCase1 = col.querySelector("div"+case1);
-    var emptyCase2 = col.querySelector("div"+case2);
-    checkNextCasesEmpty(emptyCase1Check,emptyCase1,emptyCase2Check,emptyCase2);
-    if (case2 == ".rowb") {
-        caseTwo.style.backgroundColor="blue";
-    }
-        
-    if (case1 == ".rowi") {
-        caseOne.style.backgroundColor="blue";
-    }
-    
-    return [col.querySelector("div"+case1),col.querySelector("div"+case2)];
+    createCell() {
+        let cellInstance = new Cell(this.height/10,this.width/10,this.x,this.y);
+        return cellInstance;
     }
 
-function moveMen(case1,case2,column) {
-    colorAvailableMove(case1,case2,column)[0].classList.add("available");
-    colorAvailableMove(case1,case2,column)[1].classList.add("available2");
-    document.querySelector(".available").setAttribute("onclick","deplaceMen(this)");
-    document.querySelector(".available2").setAttribute("onclick","deplaceMen(this)");
-}
+    createBlackCell() {
+        let blackCellInstance = new BlackCell(this.height/10,this.width/10,this.x,this.y);
+        return blackCellInstance;
+    }
 
-function deplaceMen(elem) {
-    /* Cette fonction est utilisee lorsque l'on clique sur une des deux cases bleutees.
-    Un pion apparait sur la case cliquee, et la case precedente perd son pion. La couleur de fond des deux cases bleutees est supprimee. Esnuite elle appelle la fonction removeMen */
-    elem.classList.add("pionBlanc");
-    
-    if (document.querySelector(".pionBlanc").getAttribute('onclick') === "deplaceMen(this)") {
-        document.querySelector(".available").removeAttribute("style");
-        document.querySelector(".available2").removeAttribute("style");
-    }
-    
-    removeMen(document.querySelector(".available"));
-        
-    }
-    
-function removeMen(elem) {
-    let column = elem.parentNode.classList[1];
-    
-    for (let j= 0;j<allColumns.length;j++) {
-        
-        if (allColumns[j] === column) {
-            var previousCol = allColumns[j+1];
+    addCellsToBoard() {
+        // we loop trough the 2D array representing the board
+        // if the cell is located on a even row and an even colum,
+        // or an odd row and an odd column,
+        // we add a black case
+
+        // if the cell is located on a even row and an odd colum,
+        // or an odd row and an even column,
+        // we add a white case
+        for (let i = 0; i < this.array.length;i++) {
+            for (let j = 0; j < this.array[i].length;j++) {
+                if (i % 2 === 0 && j % 2 === 0) {
+                    this.array[i][j].push(this.createBlackCell());
+                }
+                else if (i % 2 === 0 && j % 2 != 0) {
+                    this.array[i][j].push(this.createCell());
+                }
+                else if (i % 2 != 0 && j % 2 === 0) {
+                    this.array[i][j].push(this.createCell());
+                }
+                else if (i % 2 != 0 && j % 2 != 0) {
+                    this.array[i][j].push(this.createBlackCell());
+                }
+            }
         }
     }
-    
-    for (let i= 0;i<allRow.length;i++) {
-        
-        if (elem.classList[1] === allRow[i]) {
-            let previousCase = document.querySelector("."+previousCol+" ."+allRow[i+1]);
-            previousCase.classList.remove('pionBlanc');
-            previousCase.removeAttribute('style');
+
+    getCursorPosition(canvas, event) {
+        const rect = canvas.getBoundingClientRect()
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        const coordinates = [Math.floor(x),Math.floor(y)];
+        return coordinates;
+    }
+
+    seeIfInsideCase(row,col) {
+        let coteGauche = this.array[row][col][0].getX();
+        let coteDroit =  coteGauche + this.array[row][col][0].width;
+        let coteSuperieur = this.array[row][col][0].getY();
+        let coteInferieur = coteSuperieur + this.array[row][col][0].height;
+        let x = this.getCursorPosition(canvas,event)[0];
+        let y = this.getCursorPosition(canvas,event)[1];
+        if ( x  > coteGauche && x < coteDroit &&  y > coteSuperieur && y < coteInferieur){
+                console.log(coteGauche,x,coteDroit);
+                console.log(coteSuperieur,y,coteInferieur);
+                this.array[row][col][0].select();
+                console.log(this.array[row][col][0].color);
         }
     }
-    document.querySelector('.available').classList.remove('available');
-    elem.setAttribute('onclick','selectMen(this)');
-    document.querySelector('.available2').removeAttribute('onclick');
-    document.querySelector('.available2').classList.remove('available2');
-    selection = false;
-    alert(selection);
+
+    // selectCell(coordX,coordY) {
+    //     for (let i = 0;i< this.array.length;i++) {
+    //         for (let j = 0;j<this.array[i].length;j++) {
+    //             console.log(this.array[i][j][0].getY(),this.array[i][j][0].getX());
+    //         }
+    //     }
+    // }
 }
 
-function checkNextCasesEmpty(Case1Empty,caseOne,Case2Empty,caseTwo) {
-    if (Case1Empty === true && Case2Empty === false)  {
-        caseOne.style.border = null;
-            caseTwo.style.backgroundColor="blue";
+class Cell {
+    x;
+    y;
+    height = canvas.height/10;
+    width = canvas.width/10;
+    color = "darkred";
+
+    constructor(x,y) {
+    	this.x = x;
+        this.y = y;
         }
-        else if (Case1Empty === false && Case2Empty === true) {
-            caseOne.style.backgroundColor="blue";
-            caseTwo.style.border = null;
-        }
-        else if (Case1Empty === true && Case2Empty === true) {
-            caseOne.style.backgroundColor=null;
-            caseTwo.style.backgroundColor=null;
-            caseOne.style.border = null;
-            caseOne.style.border = null;
+    
+    display(x,y) {
+        ctx.beginPath();
+        ctx.fillStyle = this.color;
+        ctx.strokeStyle = "white";
+        ctx.strokeRect(x,y,this.height,this.width, this.color);
+        ctx.fillRect(x,y,this.height,this.width, this.color);
+    }
+
+    getX() {
+        return this.x;
+    }
+
+    getY() {
+        return this.y;
+    }
+    
+    setX(newX) {
+        this.x = newX;
+        return this.x;
+    }
+
+    setY(newY) {
+        this.y = newY;
+        return this.y;
+    }
+    select() {
+        console.log('Select');
+    }
+}
+
+class BlackCell extends Cell {
+    color = "black";
+
+    constructor(height,width,x,y) {
+    	super(height,width,x,y)
+    }
+}
+
+class Game {
+
+    start() {
+        const board = new Board(boardGame,0,0,canvas.height,canvas.width);
+        board.addCellsToBoard();
+        board.display();
+        // board.selectCell();
+        canvas.addEventListener('click',function(e){
+            // board.getCursorPosition(canvas, e);
+            for (let i = 0; i < board.array.length;i++) {
+                for (let j = 0; j < board.array[i].length;j++) {
+                    board.seeIfInsideCase(i,j);
+                }
+            }
+
+
+
             
-        }
-        else if (Case1Empty === false && Case2Empty === false) {
-            caseOne.style.backgroundColor="blue";
-            caseTwo.style.backgroundColor="blue";  
-        } 
+        });
+    }
 }
 
-function changePlayer() {}
+document.querySelectorAll('.play')[0].addEventListener('click', function() {
+    // Display the board game when clicking on the start button
+    document.querySelector("#main").style.display = 'none';
+    document.querySelector("canvas").style.display = 'block';
+    const game = new Game();
+    game.start();
+});
 
-function eatMen() {}
-
-function becomeKing() {}
+// =================================== Version POO Fin ==============================
 
 
 
-addSelectFunctionToWhiteMen();
-addSelectFunctionToBlackMen();
+// ===================== RULES =====================
+// the game is play on a 10*10 board
+// each player have 20 pawn at first
+// the game start with the white pawn
+// we select a pawn
+// if the pawn selected face one ore two empty cases
+// the pawn can move one time
+// if the pawn reach the last range of the opposite board
+// it become a King
+// A King can move until he encounters a wall or two pawns
+// if a pawn have an opponent pawn beyond it and an empty case beyond the opponent pawn
+// it can eat the pawn by jumping beyond the opponent pawn unto the empty case
+// if, on the empty case, it encounters the same situation, it can eat again
 
+// the game is finished when a Player lose all his pawn or two King of opposite players exists
+// at the same time
+// ===================== RULES =====================
+
+
+
+
+
+
+
+// =================================== old code  =========================================
+
+// // document.querySelector("aside").style.display = 'flex';
+    // const boardGame = new Board(80,80,0,0);
+    // boardGame.displayBoard();
+    // boardGame.addMovingClassToBlackCells(0,25);
+    // boardGame.addPawnsToCells("blackPawn",0,10);
+    // boardGame.addPawnsToCells("whitePawn",15,25);
+    // boardGame.createPawns();
+    // const allWhitePawnsDivs = document.querySelectorAll('.whitePawn');
+    // console.log(whitePawnsInstances)
+    // const whitePawnsInstancesAndDivMap = new Map();
+    // allWhitePawnsDivs.forEach((pawn,i) => {
+    //     whitePawnsInstancesAndDivMap.set(pawn.getAttribute("nb"),whitePawnsInstances[i]);
+    // });
+    // console.log(whitePawnsInstancesAndDivMap.get("1").checkAvailableMoves());
+    // // for (let i = 0; i < array2D.length; i++) {    for (let j = 0; j < array2D[i].length; j++) {
+    // Draw all the blocks
+// const body = document.querySelector("body");
+// const joueur1 = true;
+// let selection = false;
+// const cells = ["cell", "cell", "cell", "cell", "cell", "cell", "cell", "cell", "cell", "cell"];
+// const rows = ['row', 'row', 'row', 'row', 'row', 'row', 'row', 'row', 'row', 'row'];
+// let whiteTurn = true;
+// let blackTurn  = false;
+// let blackPawnsInstances = [];
+// let whitePawnsInstances = [];
+// let pawnIsSelected = false;
+
+
+
+
+
+// // create the pawns and add them to their respectives arrays
+    // createPawns() {
+    //     let blackPawn = new BlackPawn(10,10);
+    //     let whitePawn = new WhitePawn(10,10);
+    //     blackPawn.addSelectFunctionToPawns();
+    //     whitePawn.addSelectFunctionToPawns();
+    // }
+
+    // select() {
+    //     this.style.borderColor = '#4eb1ba';
+    //     this.style.height = 100;
+    // }
+    
+    // // add a onclick event
+    // addSelectFunctionToCells() {
+    //     let cells = document.querySelectorAll("div.cell");
+    //     cells.forEach(cell => {
+    //         cell.addEventListener("click", this.select);
+    //     });
+    // }
+
+    // stylePawn(type,bgColor) {
+    //     // add a style to the pawns
+    //     let pawns = document.querySelectorAll(type);
+    //     pawns.forEach(pawn => {
+    //         let newPawn = new Pawn();
+    //         pawn.style.height = "9vh";
+    //         pawn.style.width = "9vh";
+    //         pawn.style.backgroundColor = bgColor;
+    //         pawn.style.borderRadius = "50%";
+    //         pawn.style.margin = "auto";
+    //     });
+    // }
+    // addMovingClassToBlackCells(starterCell,lastCell) {
+    //     let evenRowCells = document.querySelectorAll(".row:nth-child(even) .cell:nth-child(even)");
+
+    //     // select the black cells who are on the 2,4,6,8 and 10 rows and add a pawn to these cells
+    //     for (let i=starterCell;i<lastCell;i++) {
+    //         evenRowCells[i].classList.add("movingCell");
+    //     }
+       
+    //     // select the black cells who are on the 1,3,5,7 and 9 rows and add a pawn to these cells
+    //     let oddRowCells = document.querySelectorAll(".row:nth-child(odd) .cell:nth-child(odd)");
+    //     for (let i=starterCell;i<lastCell;i++) {
+    //         oddRowCells[i].classList.add("movingCell");
+    //     }
+    // }
+
+    
+
+    // // add Pawns to the board
+    // addPawnsToCells(colorPawn,starterCell,lastCell) {
+        
+    //     let evenRowCells = document.querySelectorAll(".row:nth-child(even) .cell:nth-child(even)");
+
+    //     // select the black cells who are on the 2,4,6,8 and 10 rows and add a pawn to these cells
+    //     for (let i=starterCell;i<lastCell;i++) {
+    //         evenRowCells[i].insertAdjacentHTML('afterbegin',"<div class="+colorPawn+"></div>");
+    //         blackPawnsInstances.push(new Pawn(10,10));
+    //         whitePawnsInstances.push(new Pawn(10,10));
+    //     }
+       
+    //     // select the black cells who are on the 1,3,5,7 and 9 rows and add a pawn to these cells
+    //     let oddRowCells = document.querySelectorAll(".row:nth-child(odd) .cell:nth-child(odd)");
+    //     for (let i=starterCell;i<lastCell;i++) {
+    //         oddRowCells[i].insertAdjacentHTML('afterbegin',"<div class="+colorPawn+"></div>");
+    //     }
+
+    //     // add a style to the pawns
+    //     this.stylePawn(".whitePawn","#a5740c");
+    //     this.stylePawn(".blackPawn","darkred");
+    // }
+
+// class Board {
+//     array;
+
+
+//     constructor(array) {
+//     	this.array = array;
+//         }
+    
+//     // create the board game and display it on the HTML page
+//     displayBoard() {
+        
+//         let container = document.querySelector('main.myGame');
+//         // insert ten div.row inside the main tag
+//         rows.forEach((row) => { 
+//             container.insertAdjacentHTML('beforeend',"<div class="+row.toString()+"></div>");
+//         });
+//         // insert ten div.cell inside each div.row
+//         let myRows = document.querySelectorAll('div.row');
+//         cells.forEach(square => {
+//             myRows.forEach(unit => {
+//                 unit.insertAdjacentHTML('beforeend',"<div class="+cells[0].toString()+"></div>");
+//             });
+//         });
+//     }
+
+//     createCells() {}
+    
+//     select() {
+//         this.style.borderColor = '#4eb1ba';
+//         this.style.height = 100;
+//     }
+    
+//     // add a onclick event
+//     addSelectFunctionToCells() {
+//         let cells = document.querySelectorAll("div.cell");
+//         cells.forEach(cell => {
+//             cell.addEventListener("click", this.select);
+//         });
+//     }
+
+//     stylePawn(type,bgColor) {
+//         // add a style to the pawns
+//         let pawns = document.querySelectorAll(type);
+//         pawns.forEach(pawn => {
+//             let newPawn = new Pawn();
+//             pawn.style.height = "9vh";
+//             pawn.style.width = "9vh";
+//             pawn.style.backgroundColor = bgColor;
+//             pawn.style.borderRadius = "50%";
+//             pawn.style.margin = "auto";
+//         });
+//     }
+//     addMovingClassToBlackCells(starterCell,lastCell) {
+//         let evenRowCells = document.querySelectorAll(".row:nth-child(even) .cell:nth-child(even)");
+
+//         // select the black cells who are on the 2,4,6,8 and 10 rows and add a pawn to these cells
+//         for (let i=starterCell;i<lastCell;i++) {
+//             evenRowCells[i].classList.add("movingCell");
+//         }
+       
+//         // select the black cells who are on the 1,3,5,7 and 9 rows and add a pawn to these cells
+//         let oddRowCells = document.querySelectorAll(".row:nth-child(odd) .cell:nth-child(odd)");
+//         for (let i=starterCell;i<lastCell;i++) {
+//             oddRowCells[i].classList.add("movingCell");
+//         }
+//     }
+
+//     // create the pawns and add them to their respectives arrays
+//     createPawns() {
+//         let blackPawn = new BlackPawn(10,10);
+//         let whitePawn = new WhitePawn(10,10);
+//         blackPawn.addSelectFunctionToPawns();
+//         whitePawn.addSelectFunctionToPawns();
+//     }
+
+//     // add Pawns to the board
+//     addPawnsToCells(colorPawn,starterCell,lastCell) {
+        
+//         let evenRowCells = document.querySelectorAll(".row:nth-child(even) .cell:nth-child(even)");
+
+//         // select the black cells who are on the 2,4,6,8 and 10 rows and add a pawn to these cells
+//         for (let i=starterCell;i<lastCell;i++) {
+//             evenRowCells[i].insertAdjacentHTML('afterbegin',"<div class="+colorPawn+"></div>");
+//             blackPawnsInstances.push(new Pawn(10,10));
+//             whitePawnsInstances.push(new Pawn(10,10));
+//         }
+       
+//         // select the black cells who are on the 1,3,5,7 and 9 rows and add a pawn to these cells
+//         let oddRowCells = document.querySelectorAll(".row:nth-child(odd) .cell:nth-child(odd)");
+//         for (let i=starterCell;i<lastCell;i++) {
+//             oddRowCells[i].insertAdjacentHTML('afterbegin',"<div class="+colorPawn+"></div>");
+//         }
+
+//         // add a style to the pawns
+//         this.stylePawn(".whitePawn","#a5740c");
+//         this.stylePawn(".blackPawn","darkred");
+//     }
+// }
